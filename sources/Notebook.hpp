@@ -25,30 +25,36 @@ namespace ariel {
 
         class Page {
             public:
-                map<uint, vector<char>> _page;
+                map<int, vector<char>> _page;
             
-                uint MAX_ROW = 0;
-                uint MAX_COL = 0;
-                uint MIN_ROW = INT8_MAX;
-                uint MIN_COL = NOTEBOOK_LEN;
+                int MAX_ROW = 0;
+                int MAX_COL = 0;
+                int MIN_ROW = INT8_MAX;
+                int MIN_COL = NOTEBOOK_LEN;
                 ~Page();
         };
         
-        map<uint, Page*> notebook;
+        map<int, Page*> notebook;
 
+        // Help methods:
+        Page *write_horizontal(Page* page, const int &row, uint col, const int &len, const string& str);
+        Page *write_vertical(Page* page, const int &row, uint col, const int &len, const string& str);
 
     public:
-
+    
         Notebook();
         ~Notebook();
 
-        void write(uint page, uint row, uint col, Direction dir, string str);
+        void write(const int &page, const int &row, const int &col, const Direction &dir, const string &str);
 
-        std::string read(uint page, uint row, uint col, Direction dir, uint length);
+        string read(const int &page, const int &row, const int &col, const Direction &dir, const int &length);
 
-        void erase(uint page, uint row, uint col, Direction dir, uint length);
+        void erase(const int &page, const int &row, const int &col, const Direction &dir, const int &length);
 
-        void show(uint page);
+        void show(const int &page);
+
+        // Help methods:
+        Page *getPage(const int &page_num);
     };
 
 }

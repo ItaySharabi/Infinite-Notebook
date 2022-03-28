@@ -44,15 +44,25 @@ int main(){
 
     for (int i = 0; i < 50; ++i) {
 
-        s += "@~";
+        s += "@#";
     }
 
     notebook.write(21, 11, 0, Direction::Horizontal, s);
+    // notebook.show(21);
     notebook.write(21, 13, 0, Direction::Horizontal, s);
     notebook.write(21, 11, 99, Direction::Vertical, "|||");
     notebook.write(21, 11, 0, Direction::Vertical, "|||");
 
     notebook.show(21);
+
+    notebook.write(/*page=*/21, /*row=*/12000, /*column=*/40, Direction::Horizontal , "Advanced CPP Notebook: ");
+    notebook.write(21, 11999, 0, Direction::Horizontal, s);
+    notebook.write(21, 12001, 0, Direction::Horizontal, s);
+    notebook.write(21, 11999, 99, Direction::Vertical, "|||");
+    notebook.write(21, 11999, 0, Direction::Vertical, "|||");
+
+
+
     int n = 7;
 
     vector<string> carpet = split(mat(n, n, '$', '@'), '\n');
@@ -62,27 +72,27 @@ int main(){
     }
 
     n = 13;
-    carpet = split(mat(n, n-4, '~', '*'), '\n');
+    carpet = split(mat(n, n-4, '&', '*'), '\n');
     for (uint i = 0; i < n; ++i) {
         notebook.write(21, 100 + 20 + i, 50, Direction::Horizontal, carpet[i]);
     }
 
 
     n = 11;
-    carpet = split(mat(n, n, '~', '*'), '\n');
+    carpet = split(mat(n, n, '#', '*'), '\n');
     for (uint i = 0; i < n; ++i) {
         notebook.write(21, 100 + 16 + i, 24, Direction::Horizontal, carpet[i]);
     }
 
     n = 25;
-    carpet = split(mat(n, n, '~', '*'), '\n');
+    carpet = split(mat(n, n, '(', ')'), '\n');
     for (uint i = 0; i < n; ++i) {
         notebook.write(21, 100 + 180 + i, 12, Direction::Horizontal, carpet[i]);
     }
     notebook.write(21, 100 + 178, 14, Direction::Horizontal, "Here's a big one, far enough...");
 
-
     notebook.show(21);
+    notebook.show(22);
     return 0;
 }
 
