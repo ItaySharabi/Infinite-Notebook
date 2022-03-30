@@ -19,6 +19,9 @@ const std::string BOLDCYAN    = "\033[1m\033[36m";      /* Bold Cyan */
 
 namespace ariel {
     #define NOTEBOOK_LEN 100
+    #define PRINTABLE_MIN 32
+    #define PRINTABLE_MAX 126
+    
     class Notebook {
 
     private:
@@ -37,8 +40,9 @@ namespace ariel {
         map<int, Page*> notebook;
 
         // Help methods:
-        Page *write_horizontal(Page* page, const int &row, uint col, const int &len, const string& str);
-        Page *write_vertical(Page* page, const int &row, uint col, const int &len, const string& str);
+        Page *write_horizontal(Page* page, const int &row, int col, const int &len, const string& str);
+        Page *write_vertical(Page* page, const int &row, int col, const int &len, const string& str);
+        bool valid_page_args(ariel::Notebook::Page* p, int row, int col, Direction dir, int len);
 
     public:
     

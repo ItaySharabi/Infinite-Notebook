@@ -19,37 +19,110 @@ namespace ariel {
         // cout << "Page destructor" << endl;
     }
 
-    Notebook::Page *Notebook::write_horizontal(Page* p, const int &row, uint col, const int &len, const string& str) {
-        if(p->_page[row].empty()) {
-            p->_page[row] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line;
+    bool Notebook::valid_page_args(ariel::Notebook::Page* p, int row, int col, Direction dir, int len) {
+        // cout << row << ", " << col << ", " << len << endl;
+        if (p == nullptr || row < 0 || col < 0 || len < 0 || col >= NOTEBOOK_LEN) {
+            return false;
         }
-        uint j = col;
-        for (char c : str) {
-            p->_page[row].at(j++) = c;
+
+        if (Direction::Horizontal == dir) {
+            if (len > NOTEBOOK_LEN) {return false;}
+            if (len + col > NOTEBOOK_LEN) {return false;}
+            if (p->_page[row].empty()) {
+                // cout << "Horiz" << endl;
+                p->_page[row] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line;
+            }
+
+
+        }
+        else {
+            // Direction::Vertical
+            
+            for (int i = row; i <= row + len; ++i) {
+                if (p->_page.find(i) == p->_page.end()) {
+                    // cout << "No row exists: vertical" << endl;
+                    p->_page[i] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line;
+                }
+            }
+        }
+        
+        return true;
+    }
+
+    Notebook::Page *Notebook::write_horizontal(Page* p, const int &row, int col, const int &len, const string& str) {
+
+        if (valid_page_args(p, row, col, Direction::Horizontal, str.size())) {
+        
+            // if line did not exist - 
+            if (p->_page.find(row) == p->_page.end()) {
+                p->_page[row] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line;
+            }
+
+            for (int j = col; j < col + len; ++j) { 
+                // Check for erased spots
+                if(p->_page.at(row).at((uint)j) != '_') {
+                    if (str.at(0) != '~' || str.size() > 1) {
+                        throw out_of_range("This place is erased and cannot be over written!");
+                    }
+                }
+            }
+
+            int j = col;
+            uint i = 0;
+            while (j < col + len) {
+                p->_page[row].at((uint)j++) = str[i];
+                if (i < str.size() - 1) {
+                    i++;
+                }
+            }
+        }
+        else {
+            throw invalid_argument("Line 71: IDK If i should throw");
         }
         return p;
     }
 
-    Notebook::Page *Notebook::write_vertical(Page* p, const int &row, uint col, const int &len, const string& str) {
-        int i = row;
-        for (char c : str) {
-            if(p->_page[i++].empty()) {
-                p->_page[row] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line;
-            }
-            p->_page[i++].at((uint)col) = c;
+    Notebook::Page *Notebook::write_vertical(Page* p, const int &row, int col, const int &len, const string& str) {
+        // if (row < 0 || col < 0 || len < 0 || str.size() == 0) {
+        //     throw invalid_argument("Poisitive numbers only!");
+        // }
+        
+        if (p == NULL) {
+            return NULL;
         }
-        return p;
+        if (valid_page_args(p, row, col, Direction::Vertical, str.size())) {
+
+            for (int i = row; i < row + len; ++i) { 
+                // if line did not exist - 
+                if (p->_page.find(i) == p->_page.end()) {
+                    p->_page[i] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line;
+                }
+
+                // Check for erased spots
+                else if(p->_page.at(i).at((uint)col) != '_') {
+                    if (str.at(0) != '~' || str.size() > 1) {
+                        throw out_of_range("This place is erased and cannot be over written!");
+                    }
+                }
+            }
+
+            int i = row;
+            uint j = 0;
+            while (i < row + len) {
+                p->_page[i++].at((uint)col) = str[j];
+                if (j < str.size() - 1) {
+                    j++;
+                }
+            }
+            return p;
+        }
+        throw invalid_argument("Line 71: IDK If i should throw");
     }
 
     void Notebook::write(const int &page, const int &row, const int &col, const Direction &dir, const string &str) {
         for (char c : str) { if(c == '~'){throw out_of_range("You are not allowed to write `~`!  (?)");}}
         
-        // If page does not exits - create it
-        if (notebook.find(page) == notebook.end()) {
-            // cout << "Did not find page " << page << endl;
-            notebook[page] = new Page();
-        }
-        Page *PAGE = notebook[page];
+        Page *PAGE = getPage(page);
         int MAX_ROW = PAGE->MAX_ROW;
         int MIN_ROW = PAGE->MIN_ROW;
         int MAX_COL = PAGE->MAX_COL;
@@ -59,149 +132,119 @@ namespace ariel {
         PAGE->MIN_COL = min(col, MIN_COL);
         PAGE->MIN_ROW = min(row, MIN_ROW);
 
+        for (char c : str) {
+            if (c == '~') {
+                if (str.size() > 1) {
+                    throw invalid_argument("String input must not contain `~`!");
+                }
+            } else if (c < PRINTABLE_MIN || c > PRINTABLE_MAX) {
+                throw invalid_argument("String input must not contain `~`!");
+            }
+        }
+
         if (Direction::Horizontal == dir) {
             // Direction::Horizontal
-            if ((int)str.size() + col > NOTEBOOK_LEN) {throw out_of_range("Index out of bounds!");}
             
-            
-            if (PAGE->_page[row].empty()) {
-                PAGE->_page[row] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line;
-            }
-
-            for (uint j = (uint)col; j < PAGE->MAX_COL; ++j) { 
-                if(PAGE->_page.at(row).at(j) == '~'){
-                    throw out_of_range("This place is erased and cannot be over written!");
-                }
-            }
-            // Cast to int becuase implicitly converting (int + uint) = (uint) int
-            if (col + (int)str.size() > MAX_COL) {
-                PAGE->MAX_COL = col + (int)str.size();
-            }
-
-            PAGE = write_horizontal(PAGE, row, (uint)col, str.size(), str);
-            // uint j = (uint)col;
-            // for (char c : str) {
-                // PAGE->_page[row].at(j++) = c;
-            // }
+            PAGE = write_horizontal(PAGE, row, col, str.size(), str);
         }
         else {
             // Direction::Vertical:
-            if (row + (int)str.size() >= PAGE->MAX_ROW) {
-                PAGE->MAX_ROW = row + (int)str.size() - 1;
-            }
-
-            for (int i = row; i < row + (int)str.size(); ++i) {
-                if (PAGE->_page[i].empty()) {
-                    PAGE->_page[i] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line;
-                }
-            }
-            int i = row;
-            for (char c : str) {
-                PAGE->_page[i++].at((uint)col) = c;
-            }
+            
+            PAGE = write_vertical(PAGE, row, col, str.size(), str);
+        }
+        if (col + (int)str.size() > PAGE->MAX_COL) {
+            PAGE->MAX_COL = col + (int)str.size();
+        }
+        if (row + (int)str.size() >= PAGE->MAX_ROW) {
+            PAGE->MAX_ROW = row + (int)str.size() - 1;
         }
         notebook[page] = PAGE;
     }
 
     Notebook::Page* Notebook::getPage(const int &page_num) {
-        if (notebook.find(page_num) == notebook.end()) {return NULL;}
+        if (page_num < 0) {
+            throw invalid_argument("Page number must be non-negative!");
+        }
+        if (notebook.find(page_num) == notebook.end()) {return new Page();}
         return notebook.at(page_num);
     }
 
     string Notebook::read(const int &page, const int &row, const int &col, const Direction &dir, const int &length){
-        if (page < 0 || row < 0 || col < 0 || length < 1) {
-            throw invalid_argument("Input parameters must be non-negative!");
-        }
+
         Page *p = getPage(page);
-        if (p == NULL) {
-            // No such page exists
-            p = new Page(); // Create a new Page
+        // cout << "(" << row << ", " << col << "), " << "(" << length << ")" << endl;
+        if (!valid_page_args(p, row, col, dir, length)) {
+            throw invalid_argument("Arguments must be non-negative!");
         }
-
         if (Direction::Horizontal == dir) {
-            // Direction::Horizontal:
-            if (col + length > NOTEBOOK_LEN) {
-                throw out_of_range("Reading out of range...");
+                string ans = string("");
+                for (int j = col; j < col + length; ++j) {
+                    ans += p->_page[row].at((uint)j);
+                }
+                return ans;
             }
-            if (p->_page.find(row) == p->_page.end() /*p->_page[row].empty()*/) {
-                // No such row exists
-                p->_page[row] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line
-            }
-
-            string ans = "";
-            for (int j = col; j < col + length; ++j) {
-                ans += p->_page[row].at((uint)j);
-            }
-            return ans;
-        }
-        else {
-            // Direction::Vertical:
             
-            if (p->_page.find(row) == p->_page.end() /*p->_page[row].empty()*/) {
-                // No such row exists
-                p->_page[row] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line
-            }
-
-            string ans = "";
-            for (int i = col; i < row + length; ++i) {
-                ans += p->_page[i].at((uint)col);
+            // Direction::Vertical
+            string ans = string("");
+            for (int i = row; i < row + length; ++i) {
+                if (p->_page[i].empty()) {
+                    ans += "_";
+                }
+                else {
+                    ans += p->_page[i].at((uint)col);
+                }
             }
             return ans;
-        }
-
-
-        
-        return "";
     }
 
     void Notebook::erase(const int &page, const int &row, const int &col, const Direction &dir, const int &length){
 
         Page *p = getPage(page);
-        if (p == NULL) {
-            p = new Page();
-        }
+        
+        if (valid_page_args(p, row, col, dir, length)) {
 
-        if (Direction::Horizontal == dir) {
-            // Direction::Horizontal 
+            if (Direction::Horizontal == dir) {
+                // Direction::Horizontal
 
-            p = write_horizontal(p, row, (uint)col, length, "~");
+                p = write_horizontal(p, row, col, length, "~");
+            }
+            else {
+                // Direction::Vertical:
+                p = write_vertical(p, row, col, length, "~");
+            }
+            notebook[page] = p;
         }
         else {
-            // Direction::Vertical:
-            p = write_vertical(p, row, (uint)col, length, "~");
+            throw invalid_argument("Arguments for erase() must be non-negative!!");
         }
-        notebook[page] = p;
+        
     }
 
     void Notebook::show(const int &page){
 
         // if (getPage())
-        
-
         cout << RED << "------------------ Page #" << page << " ------------------" << RESET << endl;
         Page* PAGE = getPage(page);
-        if (!PAGE) {
-            PAGE = new Page();
-        }
 
-        if (PAGE->MIN_COL == PAGE->MAX_COL) {PAGE->MAX_COL++;}
-        if (PAGE->MIN_ROW == PAGE->MAX_ROW) {PAGE->MAX_ROW++;}
+        // if (PAGE->MIN_COL == PAGE->MAX_COL) {PAGE->MAX_COL++;}
+        // if (PAGE->MIN_ROW == PAGE->MAX_ROW) {PAGE->MAX_ROW++;}
         int MAX_ROW = PAGE->MAX_ROW;
         int MIN_ROW = PAGE->MIN_ROW;
         int MAX_COL = PAGE->MAX_COL;
         int MIN_COL = PAGE->MIN_COL;
         int count = 0;
-
+        // cout << "(" << MIN_ROW << ", " << MIN_COL << "), " << "(" << MAX_ROW << ", " << MAX_COL << ")" << endl;
         for (int i = MIN_ROW; i <= MAX_ROW; ++i) {
             if (PAGE->_page.find(i) == PAGE->_page.end() && count < 3) {
                 // First 3 unused lines - print:
                 cout << i << ": ." << endl;
                 count++;
                 continue;
-            } else if (PAGE->_page.find(i) == PAGE->_page.end() && count >= 3){
+            }
+            if (PAGE->_page.find(i) == PAGE->_page.end() && count >= 3){
                 continue; // Skip Unused lines
             }
-            else if (PAGE->_page.find(i) != PAGE->_page.end()) {
+            if (PAGE->_page.find(i) != PAGE->_page.end()) {
                 // Found a line with content
                 cout << i << ": ";
                 count = 0;
