@@ -5,26 +5,40 @@ using namespace std;
 
 namespace ariel {
 
-    void print_vector(const vector<char>& vec) {
-
-        for (uint i = 0; i < vec.size()/2; ++i) {
-            cout << vec[i] << " ";
-        }
-        cout << "." << endl;
-    }
-
-
+    /**
+     * @brief A method that checks if a given page
+     * already exists in our notebook.
+     * Throws an error if page is negative!
+     * 
+     * @param page - page number
+     * @return true - if page already exists.
+     * @return false - otherwise.
+     */
     bool Notebook::page_exists(const int& page) {
         if (page < 0) {throw invalid_argument("Page number must be non-negative!");}
         return notebook.find(page) != notebook.end();
     }
 
+    /**
+     * @brief A method which checks for negative input,
+     * or any input exceeding the notebooks limits:
+     * For example:
+     * If writing horizontally: then it must hold that col + len <= NOTEBOOK_LEN
+     * 
+     * @param page 
+     * @param row 
+     * @param col 
+     * @param dir 
+     * @param len 
+     * @return true - if page, row, ... are all valid
+     * @return false - otherwise.
+     */
     bool valid_input(const int& page, int row, int col, const Direction& dir, const int& len) {
         if (page < 0 || row < 0 || col < 0 || len < 0 || col >= NOTEBOOK_LEN) {
             return false;
         }
 
-        if (Direction::Horizontal == dir) {
+        if (Direction::Horizontal == dir){
             if (col + len > NOTEBOOK_LEN) {
                 return false;
             }
@@ -32,71 +46,81 @@ namespace ariel {
         return true;
     }
 
+    /**
+     * @brief A method which is called to perform the actual
+     * Vertical writing. This method does not check given arguments
+     * since it is a private method that is only called from within our class.
+     * 
+     * @param page 
+     * @param row 
+     * @param col 
+     * @param len 
+     * @param str - string to write in a vertical orientation
+     */
     void Notebook::write_vertical(const int& page, int row, int col, const int &len, const string& str) {
-        // cout << "vert" << endl;
-        // cout << "row: " << row << ", " << "col: " << col << ", ln: " << len << endl;
         if (col > notebook[page]->MAX_COL) {
             notebook[page]->MAX_COL = col;
         }
-        // cout << "row: " << row << ", " << "col: " << col << ", ln: " << len << endl;
 
         if (row + (int)str.size() >= notebook[page]->MAX_ROW) {
-            notebook[page]->MAX_ROW = row + (int)str.size() - 1;
+            notebook[page]->MAX_ROW = row + (int)str.size();
         }
-        // cout << "row: " << row << ", " << "col: " << col << ", ln: " << len << endl;
 
         string dummy;
         int i = row;
         uint j = 0;
         while (i < len + row) {
             dummy = string("");
-            // cout << "row: " << row << ", " << "col: " << col << ", ln: " << len << endl;
-            // cout << "dummy + str[" << j << "] = " << (dummy + str[j]) << endl;
             write_horizontal(page, i++, col, 1, (dummy + str[j]));
-            // print_vector(notebook[page]->_page[i-1]);
             if (j < str.size()-1) {
                 j++;
             }
         }
     }
 
+    /**
+     * @brief A method which is called to perform the actual
+     * Horizontal writing. This method does not check given arguments
+     * since it is a private method that is only called from within our class.
+     * 
+     * @param page 
+     * @param row 
+     * @param col 
+     * @param len 
+     * @param str - string to write in a horizontal orientation
+     */
     void Notebook::write_horizontal(const int& page, int row, int col, const int &len, const string& str) {
-        // cout << "Writing horizontally: " << endl;
-        // cout << "row: " << row << ", " << "col: " << col << ", ln: " << len << endl;
 
         if (!page_exists(page)) {
-            notebook[page] = new Page();
+            notebook[page] = new Page(); // Create the page if it does not exist.
         }
 
         Page *p = notebook[page];
-        // cout << "check: col + len" << endl;
         if (col + len > p->MAX_COL) {
-            p->MAX_COL = col + len - 1;
+            p->MAX_COL = col + len - 1; // update MAX_COL
         }
-        // cout << "check: row" << endl;
+
         if (row >= p->MAX_ROW) {
-            p->MAX_ROW = row;
+            p->MAX_ROW = row; // update MAX_ROW
         }
 
         int j = col; // column index
         int i = 0; // string index
         while (j < col + len) {
             if (p->_page[row].empty()) {
+                // If the row was not created - create it!
                 p->_page[row] = vector<char>(NOTEBOOK_LEN, '_');
             }
-            p->_page[row].at((uint)j) = str.at((uint)i);
+            p->_page[row].at((uint)j++) = str.at((uint)i); // Write to page
+
             if (i < str.size() - 1) {
                 i++;
             }
-            j++;
         }
-        *notebook[page] = *p;
+        *notebook[page] = *p; // Make notebook[page] point to this page now.
     }
     
     void Notebook::write(const int &page, const int &row, const int &col, const Direction &dir, const string &str) {
-
-        // for (char c : str) { if(c == '~'){throw out_of_range("You are not allowed to write `~`!  (?)");}}
-        // String input check: 
         
         if (!valid_input(page, row, col, dir, str.size())) {
             throw out_of_range("Bad Input!");
@@ -123,22 +147,20 @@ namespace ariel {
             // Check for erased spots
             if(notebook[page]->_page.at(row).at((uint)j) != '_') {
                 
-                if (str.at(0) != '~' || str.size() > 1) {
+                if (str.at(0) == '~' && str.size() <= 1) {
                     throw out_of_range("This place is erased and cannot be over written!");
                 }
+                throw out_of_range("There are writings over here: `" + read(page, row, col, dir, str.size()) + "`");
             }
         }
             write_horizontal(page, row, col, (int)str.size(), str);
         }
         else {
             // Direction::Vertical
-            // cout << "Vhere" << endl;
             for (int i = row; i < row + (int)str.size(); ++i) { 
-                // if line did not exist - 
+                // if line did not exist:
                 if (notebook[page]->_page.find(i) == notebook[page]->_page.end()) {
-                    // cout << "create line" << endl;
-                    notebook[page]->_page[i] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line;
-                    // cout << "notebook[" << page << "].at( " << i <<  " ) = " << notebook[page]->_page.at(i).at(0) << endl;
+                    notebook[page]->_page[i] = vector<char>(NOTEBOOK_LEN, '_'); // Create the line
                 }
 
                 if(notebook[page]->_page.at(i).at((uint)col) != '_') {
@@ -156,8 +178,6 @@ namespace ariel {
     }
 
     string Notebook::read(const int &page, const int &row, const int &col, const Direction &dir, const int &length) {
-        // cout << "read()" << endl;
-        
         if (!valid_input(page, row, col, dir, length)) {
             throw invalid_argument("Arguments must be non-negative!");
         }
@@ -173,7 +193,6 @@ namespace ariel {
             }
             string ans = string("");
             for (int j = col; j < col + length; ++j) {
-                // cout << "j: " << j << ", ln: " << length << endl;
 
                 ans += p->_page[row].at((uint)j);
             }
@@ -194,33 +213,27 @@ namespace ariel {
     }
 
     void Notebook::erase(const int &page, const int &row, const int &col, const Direction &dir, const int &length) {
-        // cout << "erase()" << endl;
         if (!valid_input(page, row, col, dir, length)) {
             throw invalid_argument("Arguments for erase() must be non-negative!!");
         }
         if (!page_exists(page)) {
             notebook[page] = new Page();
         }
-        // cout << "create page pointer *p" << endl;
+
         Page *p = notebook[page];
         if (Direction::Horizontal == dir) {
             // Direction::Horizontal
             if (p->_page.find(row) == p->_page.end()) {
-                // cout << "create new row" << endl;
+
                 p->_page[row] = vector<char>(NOTEBOOK_LEN, '_');
-                // cout << "after new row created" << endl;
             }
             write_horizontal(page, row, col, length, "~");
         }
         else {
             // Direction::Vertical:
-            // cout << "p: " << page << ", r: " << row << ", c: " << col << "ln: " << length << endl;
             for (int i = row; i < row + length; ++i) {
                 if (p->_page[i].empty()) {
-                    // cout << "create new row" << endl;
                     p->_page[i] = vector<char>(NOTEBOOK_LEN, '_');
-                    // print_vector(p->_page[i]);
-                    // cout << "after new row created" << endl;
                 }
             }
             write_vertical(page, row, col, length, "~");
@@ -229,20 +242,18 @@ namespace ariel {
 
 
     void Notebook::show(const int& page) {
-        cout << "show()" << endl;
         Page p;
         if (!page_exists(page)) {
-            cout << "Creating new Page()" << endl;
             notebook[page] = new Page();
         }
-        cout << RED << "------------------ Page #" << page << " ------------------" << RESET << endl;
+        cout << RED << "---------------------------------------------- Page #" << page 
+                    << " ----------------------------------------------" << RESET << endl;
         p = *notebook[page];
         int MAX_ROW = p.MAX_ROW;
         int MIN_ROW = p.MIN_ROW;
         int MAX_COL = p.MAX_COL;
         int MIN_COL = p.MIN_COL;
         int count = 0;
-        cout << "(" << MIN_ROW << ", " << MIN_COL << "), " << "(" << MAX_ROW << ", " << MAX_COL << ")" << endl;
         for (int i = MIN_ROW; i <= MAX_ROW; ++i) {
             if (p._page.find(i) == p._page.end() && count < 3) {
                 // First 3 unused lines - print:
@@ -265,57 +276,12 @@ namespace ariel {
             }
             cout << endl;
         }
-        cout << endl << RED << "------------ end-show() ------------" << RESET << endl;
+        // cout << endl << RED << "------------ end-show() ------------" << RESET << endl;
+        cout << endl << RED << "------------------------------------------- end-show(" << page 
+            << ") --------------------------------------------" << RESET << endl;
     }
     
     Notebook::~Notebook() {
         // cout << "Notebook dtor" << endl;
     }
-
-
-    // void Notebook::write(const int &page, const int &row, const int &col, const Direction &dir, const string &str) {
-
-    // }
-    // string Notebook::read(const int &page, const int &row, const int &col, const Direction &dir, const int &length) {
-    //     return "";
-    // }
-    // void Notebook::erase(const int &page, const int &row, const int &col, const Direction &dir, const int &length) {
-
-    // }
-    // void Notebook::show(const int &page){
-
-        // // if (getPage())
-        // // Page* PAGE = getPage(page);
-        // cout << RED << "------------------ Page #" << page << " ------------------" << RESET << endl;
-
-        // int MAX_ROW = PAGE->MAX_ROW;
-        // int MIN_ROW = PAGE->MIN_ROW;
-        // int MAX_COL = PAGE->MAX_COL;
-        // int MIN_COL = PAGE->MIN_COL;
-        // int count = 0;
-        // // cout << "(" << MIN_ROW << ", " << MIN_COL << "), " << "(" << MAX_ROW << ", " << MAX_COL << ")" << endl;
-        // for (int i = MIN_ROW; i <= MAX_ROW; ++i) {
-        //     if (PAGE->_page.find(i) == PAGE->_page.end() && count < 3) {
-        //         // First 3 unused lines - print:
-        //         cout << i << ": ." << endl;
-        //         count++;
-        //         continue;
-        //     }
-        //     if (PAGE->_page.find(i) == PAGE->_page.end() && count >= 3){
-        //         continue; // Skip Unused lines
-        //     }
-        //     if (PAGE->_page.find(i) != PAGE->_page.end()) {
-        //         // Found a line with content
-        //         cout << i << ": ";
-        //         count = 0;
-        //     }
-        //     for (int j = MIN_COL; j <= MAX_COL && j < NOTEBOOK_LEN; ++j) {
-        //         if (PAGE->_page.find(i) != PAGE->_page.end()) {
-        //             cout << PAGE->_page.at(i).at((uint)j);
-        //         }
-        //     }
-        //     cout << endl;
-        // }
-        // cout << endl << RED << "------------ end-show() ------------" << RESET << endl;
-    // }
 }
