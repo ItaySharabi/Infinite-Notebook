@@ -6,7 +6,6 @@ using namespace std;
 using namespace ariel;
 
 #define max 999
-// string strings[max];
 #define MAIN_INPUT_MSG "Choose an action to perform in the notebook:\n\t1. Choose page\n\t2. Quit\nYour input: "
 #define ACTION_INPUT_MSG "Which action would you like to perform?"
 #define WRITE_ACTION_MSG "Write(row, col, direction, content)"
@@ -16,7 +15,7 @@ using namespace ariel;
 
 
 vector<string> split (const string &str, char seperator)
-{  
+{
     // cout << str << endl;
     uint currIndex = 0;
     uint i = 0;  
@@ -60,7 +59,6 @@ void start_page_menu(const int& page_num) {
         cin >> usr_in;
         cout << endl;
         try {
-
             if (usr_in == 1) { // Write
                 cout << "Horizontal = 1  |  Vertical = 2" << endl;
                 cout << "Write(row="; cin >> row; 

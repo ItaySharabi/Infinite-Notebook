@@ -95,29 +95,27 @@ namespace ariel {
             notebook[page] = new Page(); // Create the page if it does not exist.
         }
 
-        Page *p = notebook[page];
-        if (col + len > p->MAX_COL) {
-            p->MAX_COL = col + len - 1; // update MAX_COL
+        if (col + len > notebook[page]->MAX_COL) {
+            notebook[page]->MAX_COL = col + len - 1; // update MAX_COL
         }
 
-        if (row >= p->MAX_ROW) {
-            p->MAX_ROW = row; // update MAX_ROW
+        if (row >= notebook[page]->MAX_ROW) {
+            notebook[page]->MAX_ROW = row; // update MAX_ROW
         }
 
         int j = col; // column index
         int i = 0; // string index
         while (j < col + len) {
-            if (p->_page[row].empty()) {
+            if (notebook[page]->_page[row].empty()) {
                 // If the row was not created - create it!
-                p->_page[row] = vector<char>(NOTEBOOK_LEN, '_');
+                notebook[page]->_page[row] = vector<char>(NOTEBOOK_LEN, '_');
             }
-            p->_page[row].at((uint)j++) = str.at((uint)i); // Write to page
+            notebook[page]->_page[row].at((uint)j++) = str.at((uint)i); // Write to page
 
             if (i < str.size() - 1) {
                 i++;
             }
         }
-        *notebook[page] = *p; // Make notebook[page] point to this page now.
     }
     
     void Notebook::write(const int &page, const int &row, const int &col, const Direction &dir, const string &str) {
@@ -186,15 +184,14 @@ namespace ariel {
             notebook[page] = new Page();
         }
 
-        Page *p = notebook[page];
         if (Direction::Horizontal == dir) {
-            if (p->_page.find(row) == p->_page.end()) {
-                p->_page[row] = vector<char>(NOTEBOOK_LEN, '_');
+            if (notebook[page]->_page.find(row) == notebook[page]->_page.end()) {
+                notebook[page]->_page[row] = vector<char>(NOTEBOOK_LEN, '_');
             }
             string ans = string("");
             for (int j = col; j < col + length; ++j) {
 
-                ans += p->_page[row].at((uint)j);
+                ans += notebook[page]->_page[row].at((uint)j);
             }
             return ans;
         }
@@ -202,11 +199,11 @@ namespace ariel {
         // Direction::Vertical
         string ans = string("");
         for (int i = row; i < row + length; ++i) {
-            if (p->_page[i].empty()) {
+            if (notebook[page]->_page[i].empty()) {
                 ans += "_";
             }
             else {
-                ans += p->_page[i].at((uint)col);
+                ans += notebook[page]->_page[i].at((uint)col);
             }
         }
         return ans;
@@ -220,24 +217,26 @@ namespace ariel {
             notebook[page] = new Page();
         }
 
-        Page *p = notebook[page];
+
         if (Direction::Horizontal == dir) {
             // Direction::Horizontal
-            if (p->_page.find(row) == p->_page.end()) {
+            if (notebook[page]->_page.find(row) == notebook[page]->_page.end()) {
 
-                p->_page[row] = vector<char>(NOTEBOOK_LEN, '_');
+                notebook[page]->_page[row] = vector<char>(NOTEBOOK_LEN, '_');
             }
             write_horizontal(page, row, col, length, "~");
         }
         else {
             // Direction::Vertical:
             for (int i = row; i < row + length; ++i) {
-                if (p->_page[i].empty()) {
-                    p->_page[i] = vector<char>(NOTEBOOK_LEN, '_');
+                if (notebook[page]->_page[i].empty()) {
+                    notebook[page]->_page[i] = vector<char>(NOTEBOOK_LEN, '_');
                 }
             }
             write_vertical(page, row, col, length, "~");
         }
+        notebook[page]->MIN_COL = min(col, notebook[page]->MIN_COL);
+        notebook[page]->MIN_ROW = min(row, notebook[page]->MIN_ROW);
     }
 
 
